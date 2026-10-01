@@ -1,3 +1,11 @@
+# Robot Demonstration Analysis Toolkit
+
+A toolkit for analyzing robot demonstrations through trajectory normalization,
+behavior interpretation, context-aware quality assessment, task-outcome
+evaluation, and keyframe extraction, with optional Qwen-VL review. It supports
+both offline analysis of complete episodes and incremental monitoring of
+streaming demonstrations.
+
 <table width="100%" cellpadding="8" style="table-layout: fixed; border-collapse: collapse;">
   <tr>
     <td align="center" width="33%"><img src="docs/Pick_object.png" alt="Pick object example" width="100%" /></td>
@@ -8,25 +16,6 @@
     <td align="center">Pick object</td>
     <td align="center">Cylinder upright</td>
     <td align="center">Place on shelf</td>
-  </tr>
-</table>
-
-# Robot Demonstration Analysis Toolkit
-
-A toolkit for analyzing robot demonstrations through trajectory normalization,
-behavior interpretation, context-aware quality assessment, task-outcome
-evaluation, and keyframe extraction, with optional Qwen-VL review. It supports
-both offline analysis of complete episodes and incremental monitoring of
-streaming demonstrations.
-
-<table width="100%" cellpadding="0" cellspacing="0" style="table-layout: fixed; border-collapse: collapse;">
-  <tr>
-    <td align="center" width="50%" style="padding: 0; vertical-align: top;">
-      <img src="docs/figs/task_dashboard.png" alt="Task outcome dashboard example" width="100%" height="252" style="display: block; width: 100%; height: 252px; object-fit: fill;" />
-    </td>
-    <td align="center" width="50%" style="padding: 0; vertical-align: top;">
-      <img src="docs/figs/quality_dashboard.png" alt="Quality dashboard example" width="100%" height="252" style="display: block; width: 100%; height: 252px; object-fit: fill;" />
-    </td>
   </tr>
 </table>
 
@@ -66,28 +55,37 @@ task-specific outcome evaluation. Configuration interfaces and optional VLM
 judges support custom task criteria, while quality and task dashboards plus an
 online replay GUI support practical dataset review and filtering workflows.
 
+## Architecture
+
+The toolkit normalizes each raw episode into a shared `CanonicalTrajectory`.
+`robehavior` interprets behavior, while `quality` applies contract-aware
+metrics and task-specific rules for quality and outcome evaluation. The
+complete data flow and module dependencies are documented in
+[`docs/architecture.md`](docs/architecture.md). See also [`robehavior/README.md`](robehavior/README.md)
+for behavior activity, phases, roles, keyframes, and online monitoring, and
+[`quality/README.md`](quality/README.md) for quality metrics, scoring rules,
+contextual findings, reports, and metric applicability.
+
+The panels below illustrate the resulting review workflow:
+
+- **Task outcome panel:** Summarizes success results.
+- **Quality dashboard:** Presents metric-based findings.
+- **Review queue:** Supports demonstration filtering.
+
+<table width="100%" cellpadding="0" cellspacing="0" style="table-layout: fixed; border-collapse: collapse;">
+  <tr>
+    <td align="center" width="50%" style="padding: 0; vertical-align: top;">
+      <img src="docs/figs/task_dashboard.png" alt="Task outcome dashboard example" width="100%" height="252" style="display: block; width: 100%; height: 252px; object-fit: fill;" />
+    </td>
+    <td align="center" width="50%" style="padding: 0; vertical-align: top;">
+      <img src="docs/figs/quality_dashboard.png" alt="Quality dashboard example" width="100%" height="252" style="display: block; width: 100%; height: 252px; object-fit: fill;" />
+    </td>
+  </tr>
+</table>
+
 <p align="center">
   <img src="docs/figs/review_queue.png" alt="Review queue dashboard example" width="100%" />
 </p>
-
-## Architecture
-
-The toolkit normalizes raw episodes into a shared `CanonicalTrajectory` before
-behavior interpretation and quality evaluation. The full data flow, module
-boundaries, optional services, and dependency rules are documented in
-[`docs/architecture.md`](docs/architecture.md).
-
-Package Documentation
-
-- [`robehavior/README.md`](robehavior/README.md): behavior activity, phases,
-  roles, keyframes, and online monitoring.
-- [`quality/README.md`](quality/README.md): quality metrics, scoring rules,
-  contextual findings, reports, and metric applicability.
-
-At a high level, `robehavior` derives observable behavior context from the
-canonical trajectory, while `quality` combines that context with contract-aware
-metrics and task-specific rules. Both packages are designed to be used through
-the shared trajectory and dataset interfaces described above.
 
 ## Quick Start
 
@@ -158,19 +156,6 @@ Task-success evaluation extracts behavior keyframes and optionally sends them
 to Qwen-VL for a visual outcome judgment. Use the individual steps when
 debugging keyframe selection or prompts, or use the end-to-end workflow for
 dataset evaluation.
-
-<table width="100%" cellpadding="8" style="table-layout: fixed; border-collapse: collapse;">
-  <tr>
-    <td align="center" width="33%"><img src="docs/Pick_object.png" alt="Pick object example" width="100%" /></td>
-    <td align="center" width="33%"><img src="docs/cylinder_upstraight.png" alt="Cylinder upright example" width="100%" /></td>
-    <td align="center" width="33%"><img src="docs/placeShelf.png" alt="Place object on shelf example" width="100%" /></td>
-  </tr>
-  <tr>
-    <td align="center">Pick object</td>
-    <td align="center">Cylinder upright</td>
-    <td align="center">Place on shelf</td>
-  </tr>
-</table>
 
 #### 2.1 Extract Keyframes
 
