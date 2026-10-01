@@ -201,12 +201,12 @@ The `--keyframes` option supports these event types:
     <tr>
       <td><code>gripper_close</code></td>
       <td>First frame of the detected gripper-closing phase.</td>
-      <td><code>grasp_start</code> from <code>robehavior/phases.py</code>.</td>
+      <td>First phase boundary where the gripper signal changes toward the configured closed value.</td>
     </tr>
     <tr>
       <td><code>gripper_fully_closed</code></td>
       <td>First measured gripper-state match within the closed-value tolerance; use this for completed closure.</td>
-      <td>Signal-based detection after <code>grasp_start</code> in <code>robehavior/keyframes.py</code>.</td>
+      <td>First measured state within 5% of the configured open-to-closed range from the closed value, searched after closing begins.</td>
     </tr>
     <tr>
       <th colspan="3" align="left">Release / Open</th>
@@ -214,17 +214,17 @@ The `--keyframes` option supports these event types:
     <tr>
       <td><code>gripper_open</code></td>
       <td>First frame of the detected gripper-opening phase.</td>
-      <td><code>release_start</code> from <code>robehavior/phases.py</code>.</td>
+      <td>First phase boundary where the gripper signal changes toward the configured open value.</td>
     </tr>
     <tr>
       <td><code>gripper_fully_open</code></td>
       <td>First configured open-value match after release starts.</td>
-      <td>Signal-based detection in <code>robehavior/keyframes.py</code>.</td>
+      <td>First configured gripper signal within the open-value tolerance after opening begins.</td>
     </tr>
     <tr>
       <td><code>release_keyframe</code></td>
       <td>Latest fully-open, stationary frame before retreat.</td>
-      <td>Signal-based detection in <code>robehavior/keyframes.py</code>.</td>
+      <td>Backward search from retreat for the latest open-value match whose forward position displacement stays below the stationary threshold.</td>
     </tr>
     <tr>
       <th colspan="3" align="left">Retreat</th>
@@ -232,10 +232,14 @@ The `--keyframes` option supports these event types:
     <tr>
       <td><code>retreat_start</code></td>
       <td>Detected retreat-phase boundary.</td>
-      <td><code>retreat_start</code> from <code>robehavior/phases.py</code>.</td>
+      <td>First active arm-motion phase detected after the opening phase ends.</td>
     </tr>
   </tbody>
 </table>
+
+The table lists the public names accepted by `--keyframes`. Phase labels used
+internally by `robehavior/phases.py` are implementation details and are not
+separate CLI keyframe names.
 
 The default set is `episode_start`, `gripper_close`, `gripper_fully_closed`,
 `gripper_open`, and `episode_end`. Use `--offset N` to shift every requested
