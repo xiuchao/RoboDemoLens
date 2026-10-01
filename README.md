@@ -1,3 +1,16 @@
+<table width="100%" cellpadding="8" style="table-layout: fixed; border-collapse: collapse;">
+  <tr>
+    <td align="center" width="33%"><img src="docs/Pick_object.png" alt="Pick object example" width="100%" /></td>
+    <td align="center" width="33%"><img src="docs/cylinder_upstraight.png" alt="Cylinder upright example" width="100%" /></td>
+    <td align="center" width="33%"><img src="docs/placeShelf.png" alt="Place object on shelf example" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center">Pick object</td>
+    <td align="center">Cylinder upright</td>
+    <td align="center">Place on shelf</td>
+  </tr>
+</table>
+
 # Robot Demonstration Analysis Toolkit
 
 A toolkit for analyzing robot demonstrations through trajectory normalization,
