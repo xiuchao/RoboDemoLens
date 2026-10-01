@@ -16,6 +16,9 @@ outputs/keyframes_*/
 outputs/online_stream_demo/
 docs/*
 !docs/architecture.md
+!docs/Pick_object.png
+!docs/cylinder_upstraight.png
+!docs/placeShelf.png
 !docs/figs/
 docs/figs/*
 !docs/figs/quality_dashboard.png
