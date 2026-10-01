@@ -150,14 +150,26 @@ For visualization, use the instructions in
 [`scripts/README.md`](scripts/README.md#data-visualization) to inspect a
 registered episode with LeRobot and Rerun.
 
-### 2. Task Success
+### 2. Task Outcome Evaluation
 
-Task-success evaluation extracts behavior keyframes and optionally sends them
-to Qwen-VL for a visual outcome judgment. Use the individual steps when
-debugging keyframe selection or prompts, or use the end-to-end workflow for
-dataset evaluation.
+Task-outcome evaluation determines whether the intended physical outcome is
+visible in an episode. It is separate from non-visual demonstration quality: a
+trajectory can be smooth yet fail the task, or succeed despite imperfect
+motion.
 
-#### 2.1 Extract Keyframes
+The workflow has three stages:
+
+1. **Select evidence.** Detect behavior events from trajectory and gripper
+   signals, then extract synchronized images from the requested cameras.
+2. **Judge the outcome.** Review the keyframes directly or send them to Qwen-VL
+   with a free-form question or a task-specific prompt mode.
+3. **Evaluate the dataset.** Run the same keyframe and judgment policy over one
+   episode or the full dataset and save per-episode results plus a summary.
+
+Use the individual steps below to inspect keyframe selection and prompts, or
+use the end-to-end evaluator when the policy is ready for dataset-wide review.
+
+#### 2.1 Extract Event-Based Keyframes
 
 Event-driven keyframes select frames around meaningful behavior boundaries,
 which makes them more useful for checking task outcomes than uniformly
@@ -286,10 +298,15 @@ python3.12 scripts/extract_keyframes.py \
   --out <keyframe-output-dir>
 ```
 
-#### 2.2 Run VLM on Extracted Keyframes
+#### 2.2 Judge Extracted Keyframes with Qwen-VL
 
-Use `--prompt-mode qa` with `--question` for free-form questions about selected
-frames. The `--question` argument is required in `qa` mode:
+`vlm/qwen_vl_qa.py` reads an episode's `keyframes.json` and associated images.
+Use `--camera` and `--keyframes` to restrict the evidence passed to the model;
+omit `--keyframes` to use all available frames or the selected prompt mode's
+defaults.
+
+For free-form visual questions, use `--prompt-mode qa`. This mode requires
+`--question`:
 
 ```bash
 python3.12 vlm/qwen_vl_qa.py \
@@ -300,8 +317,21 @@ python3.12 vlm/qwen_vl_qa.py \
   --keyframes episode_start
 ```
 
-For shelf placement, use the predefined
-`shelf_placement_after_release` prompt with zero-shot visual evaluation:
+Predefined prompt modes provide their own question, response schema, and
+preferred keyframes, so `--question` is not required. For example,
+`cylinder_upright` uses the available `gripper_open` and `episode_end` frames:
+
+```bash
+python3.12 vlm/qwen_vl_qa.py \
+  --keyframe-dir <keyframe-output-dir>/DSRFM_easy/ep_000 \
+  --prompt-mode cylinder_upright \
+  --shot-mode fewshot \
+  --camera observation.images.camera_1
+```
+
+For shelf placement, `shelf_placement_after_release` uses the available
+`gripper_open` and `gripper_fully_open` frames. The following command explicitly
+selects the same two keyframes for zero-shot evaluation:
 
 ```bash
 python3.12 vlm/qwen_vl_qa.py \
@@ -310,22 +340,7 @@ python3.12 vlm/qwen_vl_qa.py \
   --shot-mode zeroshot \
   --camera observation.images.camera_top \
   --camera observation.images.camera_left \
-  --keyframes gripper_open \
-  --keyframes gripper_fully_open
-```
-
-Use `--prompt-mode` to select a predefined prompt when the task has a known
-output contract. Predefined modes supply their own question and response
-format, so `--question` is not required. For example,
-`cylinder_upright` requests a structured upright-or-lying judgment:
-
-```bash
-python3.12 vlm/qwen_vl_qa.py \
-  --keyframe-dir <keyframe-output-dir>/DSRFM_easy/ep_000 \
-  --prompt-mode cylinder_upright \
-  --shot-mode fewshot \
-  --camera observation.images.camera_1 \
-  --keyframes episode_start
+  --keyframes gripper_open gripper_fully_open
 ```
 
 #### 2.3 Evaluate Task Outcomes
