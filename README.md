@@ -184,6 +184,9 @@ The `--keyframes` option supports these event types:
   </thead>
   <tbody>
     <tr>
+      <th colspan="3" align="left">Episode Boundaries</th>
+    </tr>
+    <tr>
       <td><code>episode_start</code></td>
       <td>First frame of the episode.</td>
       <td rowspan="2">Episode boundary in <code>robehavior/keyframes.py</code>.</td>
@@ -193,30 +196,25 @@ The `--keyframes` option supports these event types:
       <td>Last frame of the episode.</td>
     </tr>
     <tr>
-      <td><code>pre_grasp</code></td>
-      <td>Frame offset before the detected grasp start.</td>
-      <td rowspan="3"><code>grasp_start</code> from <code>robehavior/phases.py</code>; mapping and offset policy in <code>robehavior/keyframes.py</code>.</td>
+      <th colspan="3" align="left">Grasp / Close</th>
     </tr>
     <tr>
       <td><code>gripper_close</code></td>
-      <td>Detected gripper-closing event.</td>
+      <td>First frame of the detected gripper-closing phase.</td>
+      <td><code>grasp_start</code> from <code>robehavior/phases.py</code>.</td>
     </tr>
     <tr>
-      <td><code>post_grasp</code></td>
-      <td>Frame offset after the detected grasp start.</td>
+      <td><code>gripper_fully_closed</code></td>
+      <td>First measured gripper-state match within the closed-value tolerance; use this for completed closure.</td>
+      <td>Signal-based detection after <code>grasp_start</code> in <code>robehavior/keyframes.py</code>.</td>
     </tr>
     <tr>
-      <td><code>pre_place</code></td>
-      <td>Frame offset before the detected release start.</td>
-      <td rowspan="3"><code>release_start</code> from <code>robehavior/phases.py</code>; mapping and offset policy in <code>robehavior/keyframes.py</code>.</td>
+      <th colspan="3" align="left">Release / Open</th>
     </tr>
     <tr>
       <td><code>gripper_open</code></td>
-      <td>Detected gripper-opening event.</td>
-    </tr>
-    <tr>
-      <td><code>post_place</code></td>
-      <td>Frame offset after the detected release start.</td>
+      <td>First frame of the detected gripper-opening phase.</td>
+      <td><code>release_start</code> from <code>robehavior/phases.py</code>.</td>
     </tr>
     <tr>
       <td><code>gripper_fully_open</code></td>
@@ -229,29 +227,48 @@ The `--keyframes` option supports these event types:
       <td>Signal-based detection in <code>robehavior/keyframes.py</code>.</td>
     </tr>
     <tr>
-      <td><code>pre_retreat</code></td>
-      <td>Frame offset before the detected retreat start.</td>
-      <td rowspan="3"><code>retreat_start</code> from <code>robehavior/phases.py</code>; event mapping and offset policy in <code>robehavior/keyframes.py</code>.</td>
+      <th colspan="3" align="left">Retreat</th>
     </tr>
     <tr>
       <td><code>retreat_start</code></td>
       <td>Detected retreat-phase boundary.</td>
-    </tr>
-    <tr>
-      <td><code>post_retreat</code></td>
-      <td>Frame offset after the detected retreat start.</td>
+      <td><code>retreat_start</code> from <code>robehavior/phases.py</code>.</td>
     </tr>
   </tbody>
 </table>
 
-The default set is `episode_start`, `pre_grasp`, `gripper_close`, `post_grasp`,
-`pre_place`, `gripper_open`, `post_place`, and `episode_end`. The `pre_*` and
-`post_*` frames use `--offset`, which defaults to 5 frames. The
-`gripper_fully_open` and `release_keyframe` events require resolvable gripper
-open/closed semantics; `release_keyframe` also requires a position signal for
-the stationary check. A supported event that is not detected in an episode is
-skipped, while an unknown keyframe name raises `ValueError`. The CLI wiring is
-implemented in `scripts/extract_keyframes.py`.
+The default set is `episode_start`, `gripper_close`, `gripper_fully_closed`,
+`gripper_open`, and `episode_end`. Use `--offset N` to shift every requested
+behavior event by `N` frames: positive values select later frames and negative
+values select earlier frames. Episode boundaries are never shifted, and the
+CLI default is `--offset 0`.
+
+For example, a post-grasp view can be defined as `N` frames after completed
+gripper closure:
+
+```text
+post-grasp = gripper_fully_closed + N frames
+```
+
+Extract a post-grasp frame 5 frames after completed closure with:
+
+```bash
+python3.12 scripts/extract_keyframes.py \
+  --dataset <dataset-name> \
+  --episode 0 \
+  --keyframes gripper_fully_closed \
+  --offset 5 \
+  --camera <camera-key> \
+  --out <keyframe-output-dir>
+```
+
+`post-grasp` is a description of the shifted frame, not a keyframe name. The
+`gripper_fully_closed`, `gripper_fully_open`, and `release_keyframe` events
+require resolvable gripper open/closed semantics. Fully closed detection uses
+measured gripper state when available; `release_keyframe` also requires a
+position signal for the stationary check. A supported event that is not
+detected in an episode is skipped, while an unknown keyframe name raises
+`ValueError`. The CLI wiring is implemented in `scripts/extract_keyframes.py`.
 
 Extract one episode's keyframes:
 
