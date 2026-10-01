@@ -78,14 +78,88 @@ the shared trajectory and dataset interfaces described above.
 
 ## Quick Start
 
-### 1. Task Success
+### 1. Data Loading
+
+Datasets are registered in [`datasets.yaml`](datasets.yaml). Each entry needs a
+unique dataset name, its Hugging Face `repo_id`, a local `root`, an embodiment,
+and a trajectory contract. Camera keys and task-specific signal settings can be
+added when required:
+
+```yaml
+DEM_pickplace:
+  embodiment: aibot2
+  repo_id: alphabot2/aibot2_2026-07-07_hand_position_pick_and_place
+  root: /path/to/data_DEM/hand_position_pick_and_place
+  contract: contracts/dem_pickplace.yaml
+  signal_source: action
+  cameras:
+    top: observation.images.camera_top
+    left: observation.images.camera_right
+    right: observation.images.camera_left
+```
+
+Load a registered LeRobot dataset with the shared dataset interface:
+
+```python
+from dataset_io import load_lerobot_dataset
+
+dataset, config = load_lerobot_dataset("DEM_pickplace")
+
+print(config["root"])
+print(len(dataset))  # Number of frames across all episodes.
+print(dataset[0]["episode_index"])
+```
+
+The loader uses the local `root` when it already contains the LeRobot `data`,
+`meta`, and `videos` directories. If the dataset is missing, it downloads the
+configured `repo_id` from Hugging Face into that directory. Pass
+`force_download=True` to refresh the local copy. For signal-only workflows
+that do not require downloaded videos, pass `require_videos=False`.
+
+To enumerate episodes and read all frames from one episode:
+
+```python
+from dataset_io import build_episode_index, load_episode_items
+
+episodes = build_episode_index(dataset)
+print([episode.episode_index for episode in episodes])
+
+episode_items = load_episode_items(dataset, episode_index=0)
+first_frame = episode_items[0]
+action = first_frame["action"]
+state = first_frame["observation.state"]
+```
+
+Use a different registry file by passing
+`registry_path="/path/to/datasets.yaml"` to `load_lerobot_dataset`. The scripts
+in this repository expose the same override through `--registry` and select a
+registered dataset through `--dataset`, for example `--dataset DEM_pickplace`.
+
+For visualization, use the instructions in
+[`scripts/README.md`](scripts/README.md#data-visualization) to inspect a
+registered episode with LeRobot and Rerun.
+
+### 2. Task Success
 
 Task-success evaluation extracts behavior keyframes and optionally sends them
 to Qwen-VL for a visual outcome judgment. Use the individual steps when
 debugging keyframe selection or prompts, or use the end-to-end workflow for
 dataset evaluation.
 
-#### 1.1 Extract Keyframes
+<table width="100%" cellpadding="8" style="table-layout: fixed; border-collapse: collapse;">
+  <tr>
+    <td align="center" width="33%"><img src="docs/Pick_object.png" alt="Pick object example" width="100%" /></td>
+    <td align="center" width="33%"><img src="docs/cylinder_upstraight.png" alt="Cylinder upright example" width="100%" /></td>
+    <td align="center" width="33%"><img src="docs/placeShelf.png" alt="Place object on shelf example" width="100%" /></td>
+  </tr>
+  <tr>
+    <td align="center">Pick object</td>
+    <td align="center">Cylinder upright</td>
+    <td align="center">Place on shelf</td>
+  </tr>
+</table>
+
+#### 2.1 Extract Keyframes
 
 Event-driven keyframes select frames around meaningful behavior boundaries,
 which makes them more useful for checking task outcomes than uniformly
@@ -193,7 +267,7 @@ python3.12 scripts/extract_keyframes.py \
   --out <keyframe-output-dir>
 ```
 
-#### 1.2 Run VLM on Extracted Keyframes
+#### 2.2 Run VLM on Extracted Keyframes
 
 Use `--prompt-mode qa` with `--question` for free-form questions about selected
 frames. The `--question` argument is required in `qa` mode:
@@ -235,7 +309,7 @@ python3.12 vlm/qwen_vl_qa.py \
   --keyframes episode_start
 ```
 
-#### 1.3 Evaluate Task Outcomes
+#### 2.3 Evaluate Task Outcomes
 
 Evaluate task outcomes for one episode:
 
@@ -263,12 +337,12 @@ python3.12 scripts/evaluate_task_outcomes.py \
   --camera observation.images.camera_left
 ```
 
-### 2. Non-Visual Demonstration Quality
+### 3. Non-Visual Demonstration Quality
 
 This stage evaluates canonical action, state, gripper, and timestamp signals.
 It does not use camera images or VLM judgments.
 
-#### 2.1 Analyze Quality
+#### 3.1 Analyze Quality
 
 Analyze a 10-episode sample; timestamped results are written under
 `outputs/quality/` by default:
@@ -322,7 +396,7 @@ The fields mean:
   rather than whether the measured motion is exactly zero; task grounding is
   applied separately when inferring the arm's role.
 
-#### 2.2 HTML Quality Dashboard
+#### 3.2 HTML Quality Dashboard
 
 Generated HTML reports contain an overview of the evaluated episodes and the
 following dashboard views:

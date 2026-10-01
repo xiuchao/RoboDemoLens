@@ -17,6 +17,39 @@ Supporting commands live under `tools/`:
 - `inspect_agibot_action_state.py`: inspect raw AgiBot parquet action/state behavior.
 - `viz_lerobot.sh`: launch the LeRobot dataset visualizer from the registry.
 
+## Data Visualization
+
+Use `tools/viz_lerobot.sh` to visualize a registered episode with LeRobot and
+Rerun. The script reads `repo_id` and `root` from the repository's
+`datasets.yaml`, so only the dataset name and episode index are required:
+
+```fish
+# List registered datasets.
+bash scripts/tools/viz_lerobot.sh list
+
+# Visualize episode 0 from each STEA example dataset.
+env PATH=/data/xiuchao/cache/conda/envs/openpi/bin:$PATH \
+	bash scripts/tools/viz_lerobot.sh STEA_pick_success 0
+
+env PATH=/data/xiuchao/cache/conda/envs/openpi/bin:$PATH \
+	bash scripts/tools/viz_lerobot.sh STEA_pick_failure 0
+```
+
+The `openpi` environment is used here because it provides the
+`lerobot-dataset-viz` command and a compatible Rerun installation. If that
+environment is already activated, omit the `env PATH=...` prefix.
+
+To save a visualization as a Rerun recording without opening the viewer:
+
+```fish
+env PATH=/data/xiuchao/cache/conda/envs/openpi/bin:$PATH \
+	bash scripts/tools/viz_lerobot.sh STEA_pick_success 0 \
+	--save 1 --output-dir outputs/visualization
+```
+
+The output is an `.rrd` file that can be opened later with the `rerun` command
+from the same environment.
+
 Saved ad hoc commands and historical experiments live under `experiments/`.
 Reusable behavior belongs in `dataset_io/`, `trajectory/`, `robehavior/`,
 `quality/`, or `workflows/`; Python code must not import from `scripts/`.
